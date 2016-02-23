@@ -148,7 +148,7 @@ before_install:
 
   # Run forcefield conversion scripts to make sure they work.
   - if [[ "$TEST_FORCEFIELD_CONVERSION" == "true" ]]; then
-      conda install --yes ambermini parmed-dev
+      conda install --yes ambermini parmed-dev;
       (cd devtools/forcefield-scripts/amber/ && python conversion_script.py);
     fi
 
