@@ -148,6 +148,13 @@ before_install:
 
   # Run forcefield conversion scripts to make sure they work.
   - if [[ "$TEST_FORCEFIELD_CONVERSION" == "true" ]]; then
+      export MINICONDA="Miniconda2-latest-Linux-x86_64.sh";
+      echo "Downloading miniconda...";
+      wget --quiet http://repo.continuum.io/miniconda/${MINICONDA};
+      bash ${MINICONDA} -b -p miniconda;
+      PIP_ARGS="-U";
+      export PATH=$WORKSPACE/miniconda/bin:$PATH;
+      conda config --add channels omnia;
       conda install --yes ambermini parmed-dev;
       (cd devtools/forcefield-scripts/amber/ && python conversion_script.py);
     fi
@@ -198,4 +205,3 @@ deploy:
 cache:
   directories:
     - $HOME/.ccache
-
