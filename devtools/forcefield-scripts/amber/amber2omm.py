@@ -380,10 +380,10 @@ def assert_energies(prmtop, inpcrd, ffxml, system_name='unknown', tolerance=1e-5
         if i[0] != j[0]:
             raise RuntimeError('Mismatch in energy tuples naming.')
         if i[1] != 0:
-            rel_energies.append((i[0], (abs(i[1]-j[1])/i[1])))
+            rel_energies.append((i[0], (abs(i[1]-j[1])/abs(i[1]))))
         else:
             if j[1] != 0:
-                raise RuntimeError('One of AMBER %s energies (%s) for %s is zero, '
+                raise AssertionError('One of AMBER %s energies (%s) for %s is zero, '
                       'while the corresponding OpenMM energy is non-zero' %
                       (system_name, i[0], ffxml))
             rel_energies.append((i[0], 0))
@@ -786,7 +786,7 @@ quit""" % (HOH, pdb_name, top[1], crd[1])
             if entry[0] == 'NonbondedForce':
                 amber_nonbonded = entry[1]
 
-        rel_nonbonded = abs(amber_nonbonded-omm_nonbonded) / amber_nonbonded
+        rel_nonbonded = abs(amber_nonbonded-omm_nonbonded) / abs(amber_nonbonded)
         if rel_nonbonded > 1e-5:
             raise AssertionError('NonbondedForce Water and ions energy outside of '
                                  'allowed tolerance for %s' % ffxml_name)
