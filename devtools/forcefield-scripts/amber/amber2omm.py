@@ -31,7 +31,7 @@ if os.getenv('AMBERHOME'):
     AMBERHOME = os.getenv('AMBERHOME')
 else:
     if not find_executable('tleap'):
-        raise RuntimeError('AMBERHOME not set and tleap not available from PATH')
+        raise Exception('AMBERHOME not set and tleap not available from PATH')
     tleap_path = find_executable('tleap')
     AMBERHOME = os.path.split(tleap_path)[0]
     AMBERHOME = os.path.join(AMBERHOME, '../')
@@ -92,7 +92,7 @@ def main():
         if args.gaff_test:
             validate_gaff(ffxml_name, args.input)
     else:
-        raise RuntimeError('Wrong input_format chosen.')
+        sys.exit('Wrong input_format chosen.')
 
     if not no_log: logger.close()
 
@@ -319,7 +319,7 @@ def convert_yaml(yaml_name, ffxml_dir):
                 elif option == 'filter_warnings':
                     filter_warnings = entry['Options'][option]
                 else:
-                    raise RuntimeError("Wrong option used in Options for %s"
+                    raise Exception("Wrong option used in Options for %s"
                                        % leaprc_name)
         if MODE == 'LEAPRC':
             ffxml_name = convert_leaprc(files, ffxml_dir=ffxml_dir, ignore=ignore,
@@ -352,7 +352,7 @@ def convert_yaml(yaml_name, ffxml_dir):
                 standard_ffxml=standard_ffxml)
                 tested = True
         if not tested:
-            raise RuntimeError('No validation tests have been run for %s' %
+            raise Exception('No validation tests have been run for %s' %
                                 leaprc_name)
 
 def assert_energies(prmtop, inpcrd, ffxml, system_name='unknown', tolerance=1e-5,
@@ -378,7 +378,7 @@ def assert_energies(prmtop, inpcrd, ffxml, system_name='unknown', tolerance=1e-5
     rel_energies = []
     for i, j in zip(amber_energies, omm_energies):
         if i[0] != j[0]:
-            raise RuntimeError('Mismatch in energy tuples naming.')
+            raise Exception('Mismatch in energy tuples naming.')
         if i[1] != 0:
             rel_energies.append((i[0], abs((i[1]-j[1])/i[1])))
         else:
@@ -495,10 +495,10 @@ quit""" % (leaprc_name, villin_top[1], villin_crd[1])
     if verbose: print('Running LEaP...')
     os.system('tleap -f %s > %s' % (leap_script_ala3_file[1], os.devnull))
     if os.path.getsize(ala3_top[1]) == 0 or os.path.getsize(ala3_crd[1]) == 0:
-        raise RuntimeError('Ala_ala_ala LEaP fail for %s' % leaprc_name)
+        raise Exception('Ala_ala_ala LEaP fail for %s' % leaprc_name)
     os.system('tleap -f %s > %s' % (leap_script_villin_file[1], os.devnull))
     if os.path.getsize(villin_top[1]) == 0 or os.path.getsize(villin_crd[1]) == 0:
-        raise RuntimeError('Villin headpiece LEaP fail for %s' % leaprc_name)
+        raise Exception('Villin headpiece LEaP fail for %s' % leaprc_name)
 
     try:
         if verbose: print('Calculating and validating ala_ala_ala energies...')
@@ -618,13 +618,13 @@ quit""" % (leaprc_name, rna_top[1], rna_crd[1])
     if verbose: print('Running LEaP...')
     os.system('tleap -f %s > %s' % (leap_script_dna_file[1], os.devnull))
     if os.path.getsize(dna_top[1]) == 0 or os.path.getsize(dna_crd[1]) == 0:
-        raise RuntimeError('DNA LEaP fail for %s' % leaprc_name)
+        raise Exception('DNA LEaP fail for %s' % leaprc_name)
     os.system('tleap -f %s > %s' % (leap_script_rna_file[1], os.devnull))
     if os.path.getsize(rna_top[1]) == 0 or os.path.getsize(rna_crd[1]) == 0:
         # try alternative name mappings
         os.system('tleap -f %s > %s' % (leap_script_rna_file_alt[1], os.devnull))
     if os.path.getsize(rna_top[1]) == 0 or os.path.getsize(rna_crd[1]) == 0:
-        raise RuntimeError('RNA LEaP fail for %s' % leaprc_name)
+        raise Exception('RNA LEaP fail for %s' % leaprc_name)
 
     try:
         if verbose: print('Calculating and validating DNA energies...')
@@ -663,7 +663,7 @@ quit""" % (leaprc_name, imatinib_top[1], imatinib_crd[1])
     if verbose: print('Running LEaP...')
     os.system('tleap -f %s > %s' % (leap_script_imatinib_file[1], os.devnull))
     if os.path.getsize(imatinib_top[1]) == 0 or os.path.getsize(imatinib_crd[1]) == 0:
-        raise RuntimeError('imatinib LEaP fail for %s' % leaprc_name)
+        raise Exception('imatinib LEaP fail for %s' % leaprc_name)
 
     try:
         if verbose: print('Calculating and validating imatinib energies...')
@@ -703,7 +703,7 @@ quit""" % (supp_leaprc_name, leaprc_name, pdbname, top[1], crd[1])
         if verbose: print('Running LEaP...')
         os.system('tleap -f %s > %s' % (leap_script_file[1], os.devnull))
         if os.path.getsize(top[1]) == 0 or os.path.getsize(crd[1]) == 0:
-            raise RuntimeError('LEaP fail for %s' % leaprc_name)
+            raise Exception('LEaP fail for %s' % leaprc_name)
 
         try:
             if verbose: print('Calculating and validating energies...')
@@ -763,7 +763,7 @@ quit""" % (HOH, pdb_name, top[1], crd[1])
     if verbose: print('Running LEaP...')
     os.system('tleap -f %s > %s' % (leap_script_file[1], os.devnull))
     if os.path.getsize(top[1]) == 0 or os.path.getsize(crd[1]) == 0:
-        raise RuntimeError('LEaP fail for %s' % ffxml_name)
+        raise Exception('LEaP fail for %s' % ffxml_name)
     try:
         if verbose: print('Calculating and validating energies...')
         pdb = app.PDBFile(pdb_name, extraParticleIdentifier='')
