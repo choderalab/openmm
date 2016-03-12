@@ -318,6 +318,8 @@ def convert_yaml(yaml_name, ffxml_dir):
                     write_unused = entry['Options'][option]
                 elif option == 'filter_warnings':
                     filter_warnings = entry['Options'][option]
+                elif option == 'ffxml_dir':
+                    ffxml_dir = entry['Options'][option]
                 else:
                     raise Exception("Wrong option used in Options for %s"
                                        % leaprc_name)
