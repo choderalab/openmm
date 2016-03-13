@@ -41,6 +41,15 @@ else:
 verbose = False
 no_log = False
 
+# set files that are ignored in leaprc's
+# solvents and ions converted separately; leaprc.ff10 calls phosphoaa10.lib
+# which does not exist anymore, LeAP skips it on error so we do too
+ignore = {'solvents.lib', 'atomic_ions.lib', 'ions94.lib', 'ions91.lib',
+          'phosphoaa10.lib'}
+
+# define NEARLYZERO to replace numerical comparisons to zero
+NEARLYZERO = 1e-10
+
 def main():
     global verbose
     global no_log
@@ -52,6 +61,8 @@ def main():
                         help='path of the input file. Default: "files/master.yaml"')
     parser.add_argument('--input-format', '-if', default='yaml',
                         help='format of the input file: "yaml" or "leaprc". Default: "yaml"')
+    parser.add_argument('--output-dir', '-od', help='path of the output directory. '
+                        'Default: "ffxml/" for yaml, "./" for leaprc')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='turns verbosity on')
     parser.add_argument('--no-log', action='store_true',
@@ -66,8 +77,6 @@ def main():
                         help='validate resulting XML through phosphorylated protein tests')
     parser.add_argument('--gaff-test', action='store_true',
                         help='validate resulting XML through small-molecule (GAFF) test')
-    # parser.add_argument('--write_unused', action='store_true')
-    # parser.add_argument('--default-warnings', action='store_true')
     args = parser.parse_args()
     verbose = args.verbose
     no_log = args.no_log
@@ -77,10 +86,16 @@ def main():
     # input is either a YAML or a leaprc - default is leaprc
     # output directory hardcoded here for ffxml/
     if args.input_format == 'yaml':
-        convert_yaml(args.input, ffxml_dir='ffxml/')
+        if args.output_dir is None:
+            convert_yaml(args.input, ffxml_dir='ffxml/')
+        else:
+            convert_yaml(args.input, ffxml_dir=args.output_dir)
     # if leaprc converted - output to the same dir
     elif args.input_format == 'leaprc':
-        ffxml_name = convert_leaprc(args.input, ffxml_dir='./')
+        if args.output_dir is None:
+            ffxml_name = convert_leaprc(args.input, ffxml_dir='./')
+        else:
+            ffxml_name = convert_leaprc(args.input, ffxml_dir=args.output_dir)
         if args.protein_test:
             validate_protein(ffxml_name, args.input)
         if args.nucleic_test:
@@ -96,7 +111,7 @@ def main():
 
     if not no_log: logger.close()
 
-def convert_leaprc(files, split_filename=False, ffxml_dir='./', ignore=None,
+def convert_leaprc(files, split_filename=False, ffxml_dir='./', ignore=ignore,
     provenance=None, write_unused=False, filter_warnings='error'):
     if verbose: print('Converting %s to ffxml...' % files)
     # allow for multiple source files - further code assuming list is passed
@@ -113,7 +128,7 @@ def convert_leaprc(files, split_filename=False, ffxml_dir='./', ignore=None,
         else:
             basename += '_'
             basename += f_basename
-    ffxml_name = ffxml_dir + basename + '.xml'
+    ffxml_name = os.path.join(ffxml_dir, (basename + '.xml'))
     if not os.path.exists(ffxml_dir):
         os.mkdir(ffxml_dir)
     if verbose: print('Preprocessing the leaprc for %s...' % basename)
@@ -230,14 +245,10 @@ def convert_recipe(files, solvent_file=None, ffxml_dir='./', provenance=None, ff
     if verbose: print('%s successfully written!' % ffxml_name)
     return ffxml_name
 
-def convert_yaml(yaml_name, ffxml_dir):
+def convert_yaml(yaml_name, ffxml_dir, ignore=ignore):
     data = yaml.load(open(yaml_name))
     source_pack = data[0]['sourcePackage']
     source_pack_ver = data[0]['sourcePackageVersion']
-    # solvents and ions converted separately; leaprc.ff10 calls phosphoaa10.lib
-    # which does not exist anymore, LeAP skips it on error so we do too
-    ignore = {'solvents.lib', 'atomic_ions.lib', 'ions94.lib', 'ions91.lib',
-              'phosphoaa10.lib'}
     # Default yaml reading more is leaprc
     MODE = 'LEAPRC'
     for entry in data[1:]:
@@ -381,10 +392,10 @@ def assert_energies(prmtop, inpcrd, ffxml, system_name='unknown', tolerance=1e-5
     for i, j in zip(amber_energies, omm_energies):
         if i[0] != j[0]:
             raise Exception('Mismatch in energy tuples naming.')
-        if i[1] != 0:
+        if i[1] > NEARLYZERO:
             rel_energies.append((i[0], abs((i[1]-j[1])/i[1])))
         else:
-            if j[1] != 0:
+            if j[1] > NEARLYZERO:
                 raise AssertionError('One of AMBER %s energies (%s) for %s is zero, '
                       'while the corresponding OpenMM energy is non-zero' %
                       (system_name, i[0], ffxml))
