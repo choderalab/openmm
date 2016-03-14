@@ -392,10 +392,10 @@ def assert_energies(prmtop, inpcrd, ffxml, system_name='unknown', tolerance=1e-5
     for i, j in zip(amber_energies, omm_energies):
         if i[0] != j[0]:
             raise Exception('Mismatch in energy tuples naming.')
-        if i[1] > NEARLYZERO:
+        if abs(i[1]) > NEARLYZERO:
             rel_energies.append((i[0], abs((i[1]-j[1])/i[1])))
         else:
-            if j[1] > NEARLYZERO:
+            if abs(j[1]) > NEARLYZERO:
                 raise AssertionError('One of AMBER %s energies (%s) for %s is zero, '
                       'while the corresponding OpenMM energy is non-zero' %
                       (system_name, i[0], ffxml))
