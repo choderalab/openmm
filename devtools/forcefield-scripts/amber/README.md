@@ -1,6 +1,7 @@
 **Summary**: call `python amber2omm.py -v`. Requires the `files/` dir. Outputs `ffxml/` containing all converted XMLs and `log.csv` - log of the validation energies.
 
 **General**
+
 Script supports command line arguments, and so `python amber2omm.py -h`:
 ```
 usage: amber2omm.py [-h] [--input INPUT] [--input-format INPUT_FORMAT]
@@ -39,6 +40,7 @@ Output:
 `-v` will turn on printing of the progress-tracking comments from the script. Warnings issued by ParmEd (warnings are by default filtered to error, but in some cases this had to be relaxed to 'always' because of the nature of the files converted) are printed always. The output of LeAP is always redirected to `dev/null`.
 
 **YAML input**
+
 By default the script takes a YAML file input, `files/master.yaml` has everything that is going on here.
 There's only a few rules to the required structure of the YAML and it will be very easily extendable to future forcefields.
 
@@ -150,7 +152,7 @@ An 'overloading' set: HFE +2, +3 and +4 ions for tip3p water.
 
 * Solvent - this is the name of the solvent, this is necessary to avoid hardcoding of recognition of what solvent you're using from the names of the files etc. - and knowing which solvent you're using is necessary for energy validations.
 
-* Name - the desired name of the ffxml. (For proteins and nucleic this is done by the script, which a product of `leaprc.ff14SB'` will call `ff14SB.xml` etc.)
+* Name - the desired name of the ffxml. (For proteins and nucleic this is done by the script, which a product of `leaprc.ff14SB` will call `ff14SB.xml` etc.)
 
 Should you want to provide a different YAML (shorter version, different completely, whatever you want), script will take it with:
 ```
@@ -190,4 +192,4 @@ As I've said before already, the system is:
 
 * The impropers problem in nucleic acids is the only thing outstanding and I will attempt a solution next week. (https://github.com/choderalab/openmm/issues/9). Currently the improper energies are not validated for nucleic acid systems because of this.
 
-* @jchodera how are we doing on the Travis in this branch? Some testing appeared surprisingly some time ago, but I don't think it's testing the conversion - this has not been merged https://github.com/choderalab/openmm/pull/6. (Note the name of the script has changed now.)
+* Travis testing
