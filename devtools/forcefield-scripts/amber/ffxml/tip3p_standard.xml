@@ -4,7 +4,7 @@
   <Source md5hash="0e5e74a17e42382511afd4116f70ff16" sourcePackage="AmberTools" sourcePackageVersion="15">parm/frcmod.ionsjc_tip3p</Source>
   <Source md5hash="ee69f23d84db0f8eab9e1d2d29a64443" sourcePackage="AmberTools" sourcePackageVersion="15">parm/frcmod.ionslrcm_cm_tip3p</Source>
   <Source md5hash="e900cee0c71ec2795d25b3555de486e1" sourcePackage="AmberTools" sourcePackageVersion="15">lib/atomic_ions.lib</Source>
-  <Source md5hash="ee51d3b70393cb83a107cedf6284e7b4" sourcePackage="OpenMM" sourcePackageVersion="7.0">tip3p.xml</Source>
+  <Source md5hash="dde8c717e8d77c7511b575779ac9f968" sourcePackage="OpenMM" sourcePackageVersion="7.0">tip3p.xml</Source>
   <Reference>Joung, I.S., and Cheatham, Thomas E. (2008). Determination of Alkali and Halide Monovalent Ion Parameters for Use in Explicitly Solvated Biomolecular Simulations. J. Phys. Chem. B 112, 9020-9041.</Reference>
   <Reference>Joung, I.S., and Cheatham, T.E. (2009). Molecular Dynamics Simulations of the Dynamic and Energetic Properties of Alkali and Halide Ions Using Water-Model-Specific Ion Parameters. J. Phys. Chem. B 113, 13279-13290.</Reference>
   <Reference>Li, P., Roberts, B.P., Chakravorty, D.K., and Merz, K.M. (2013). Rational Design of Particle Mesh Ewald Compatible Lennard-Jones Parameters for +2 Metal Cations in Explicit Solvent. J. Chem. Theory Comput. 9, 2733-2748.</Reference>
@@ -159,7 +159,7 @@
   <Bond type1="tip3p-O" type2="tip3p-H" length="0.09572" k="462750.4"/>
  </HarmonicBondForce>
  <HarmonicAngleForce>
-  <Angle class1="tip3p-H" type2="tip3p-O" type3="tip3p-H" angle="1.82421813418" k="836.8"/>
+  <Angle type1="tip3p-H" type2="tip3p-O" type3="tip3p-H" angle="1.82421813418" k="836.8"/>
  </HarmonicAngleForce>
  <NonbondedForce coulomb14scale="0.833333333333" lj14scale="0.5">
   <UseAttributeFromResidue name="charge"/>
