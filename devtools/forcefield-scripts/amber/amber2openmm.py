@@ -520,12 +520,8 @@ quit""" % (leaprc_name, villin_top[1], villin_crd[1])
         if verbose: print('Ala_ala_ala energy validation successful!')
 
         if verbose: print('Calculating and validating villin headpiece energies...')
-        # hack for ff03ua - need 2e-2 impropers tolerance
-        improper_tolerance = 1e-2
-        if united_atom: improper_tolerance = 2e-2
         assert_energies(villin_top[1], villin_crd[1], ffxml_name,
-                        system_name='protein-villin headpiece',
-                        improper_tolerance=improper_tolerance)
+                        system_name='protein-villin headpiece')
         if verbose: print('Villin headpiece energy validation successful!')
     finally:
         if verbose: print('Deleting temp files...')
@@ -648,7 +644,7 @@ quit""" % (leaprc_name, rna_top[1], rna_crd[1])
         if verbose: print('Calculating and validating RNA energies...')
         # improper testing turned off pending solution to problems
         assert_energies(rna_top[1], rna_crd[1], ffxml_name,
-                        system_name='nucleic-RNA', improper_tolerance=float('inf'))
+                        system_name='nucleic-RNA')
         if verbose: print('RNA energy validation successful!')
     finally:
         if verbose: print('Deleting temp files...')
@@ -835,6 +831,99 @@ quit""" % (HOH, pdb_name, top[1], crd[1])
         logger.log(rel_energies_log)
     if verbose: print('Water and ions energy validation for %s done!'
                       % ffxml_name)
+
+def validate_impropers(ffxml_name, leaprc_name):
+    if verbose: print('Impropers validation for %s' % ffxml_name)
+    if verbose: print('Preparing temporary files for validation...')
+    top_villin = tempfile.mkstemp()
+    crd_villin = tempfile.mkstemp()
+    top_dna = tempfile.mkstemp()
+    crd_dna = tempfile.mkstemp()
+    top_rna = tempfile.mkstemp()
+    crd_rna = tempfile.mkstemp()
+    leap_script_file = tempfile.mkstemp()
+
+    if verbose: print('Preparing LeaP scripts...')
+    leap_script_string = """source %s
+x = loadPdb files/villin.pdb
+y = loadPdb files/4rzn_dna.pdb
+z = loadPdb files/5c5w_rna.pdb
+saveAmberParm x %s %s
+saveAmberParm y %s %s
+saveAmberParm z %s %s
+quit""" % (leaprc_name, top_villin[1], crd_villin[1], top_dna[1], crd_dna[1],
+           top_rna[1], crd_rna[1])
+    os.write(leap_script_file[0], leap_script_string)
+
+    if verbose: print('Running LEaP...')
+    os.system('tleap -f %s > %s' % (leap_script_file[1], os.devnull))
+    if os.path.getsize(top_villin[1]) == 0 or os.path.getsize(crd_villin[1]) == 0:
+        raise Exception('LEaP fail for %s' % leaprc_name)
+    if os.path.getsize(top_dna[1]) == 0 or os.path.getsize(crd_dna[1]) == 0:
+        raise Exception('LEaP fail for %s' % leaprc_name)
+    if os.path.getsize(top_rna[1]) == 0 or os.path.getsize(crd_rna[1]) == 0:
+        raise Exception('LEaP fail for %s' % leaprc_name)
+
+    # load into parmed
+    parm_amber_villin = parmed.load_file(top_villin[1])
+    parm_amber_dna = parmed.load_file(top_dna[1])
+    parm_amber_rna = parmed.load_file(top_rna[1])
+
+    # OpenMM
+    ff = app.ForceField(ffxml_name)
+    sys_omm_villin = ff.createSystem(parm_amber_villin.topology)
+    sys_omm_dna = ff.createSystem(parm_amber_dna.topology)
+    sys_omm_rna = ff.createSystem(parm_amber_rna.topology)
+    parm_omm_villin = parmed.openmm.load_topology(parm_amber_villin.topology,
+                                                  sys_omm_villin)
+    parm_omm_dna = parmed.openmm.load_topology(parm_amber_dna.topology,
+                                               sys_omm_dna)
+    parm_omm_rna = parmed.openmm.load_topology(parm_amber_rna.topology,
+                                               sys_omm_rna)
+
+    # prepare sets of idxs
+    set_amber_villin = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_amber_villin.dihedrals if dih.improper])
+    set_amber_dna = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_amber_dna.dihedrals if dih.improper])
+    set_amber_rna = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_amber_rna.dihedrals if dih.improper])
+    set_omm_villin = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_omm_villin.dihedrals if dih.improper])
+    set_omm_dna = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_omm_dna.dihedrals if dih.improper])
+    set_omm_rna = set([(dih.atom1.idx, dih.atom2.idx, dih.atom3.idx,
+        dih.atom4.idx) for dih in parm_omm_rna.dihedrals if dih.improper])
+
+    try:
+        if (set_amber_villin - set_omm_villin != set() or
+       set_omm_villin - set_amber_villin != set()):
+            raise AssertionError("""Impropers validation fail for %s (villin)
+                                    set_amber - set_omm: %s
+                                    set_omm - set_amber: %s""" % (ffxml_name,
+                                    set_amber_villin-set_omm_villin,
+                                    set_omm_villin-set_amber_villin))
+        if (set_amber_dna - set_omm_dna != set() or
+       set_omm_dna - set_amber_dna != set()):
+            raise AssertionError("""Impropers validation fail for %s (DNA)
+                                    set_amber - set_omm: %s
+                                    set_omm - set_amber: %s""" % (ffxml_name,
+                                    set_amber_dna-set_omm_dna,
+                                    set_omm_dna-set_amber_dna))
+        if (set_amber_rna - set_omm_rna != set() or
+       set_omm_rna - set_amber_rna != set()):
+            raise AssertionError("""Impropers validation fail for %s (RNA)
+                                    set_amber - set_omm: %s
+                                    set_omm - set_amber: %s""" % (ffxml_name,
+                                    set_amber_rna-set_omm_rna,
+                                    set_omm_rna-set_amber_rna))
+    finally:
+        if verbose: print('Deleting temp files...')
+        for f in (top_villin, crd_villin, top_dna, crd_dna, top_rna, crd_rna,
+                  leap_script_file):
+            os.close(f[0])
+            os.unlink(f[1])
+    if verbose: print('Improper validation for %s done!' % ffxml_name)
 
 class Logger():
     # logs testing energies into csv
