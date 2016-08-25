@@ -98,6 +98,16 @@ matrix:
            CXX=$CCACHE/g++
            CMAKE_FLAGS=""
 
+    - sudo: false
+      python: 3.4
+      env: ==FORCEFIELD_CONVERSION==
+           OPENCL=false
+           CUDA=false
+           CC=$CCACHE/gcc
+           CXX=$CCACHE/g++
+           CMAKE_FLAGS=""
+           TEST_FORCEFIELD_CONVERSION=true
+
 before_install:
   - START_TIME=$(date +%s)
   - wget https://anaconda.org/omnia/ccache/3.2.4/download/${TRAVIS_OS_NAME}-64/ccache-3.2.4-0.tar.bz2
@@ -134,6 +144,19 @@ before_install:
       export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION%%-*};
       export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH};
       export PATH=${CUDA_HOME}/bin:${PATH};
+    fi
+
+  # Run forcefield conversion scripts to make sure they work.
+  - if [[ "$TEST_FORCEFIELD_CONVERSION" == "true" ]]; then
+      export MINICONDA="Miniconda2-latest-Linux-x86_64.sh";
+      echo "Downloading miniconda...";
+      wget --quiet http://repo.continuum.io/miniconda/${MINICONDA};
+      bash ${MINICONDA} -b -p miniconda;
+      PIP_ARGS="-U";
+      export PATH=$WORKSPACE/miniconda/bin:$PATH;
+      conda config --add channels omnia;
+      conda install --yes ambermini parmed-dev;
+      (cd devtools/forcefield-scripts/amber/ && python conversion_script.py);
     fi
 
 script:
